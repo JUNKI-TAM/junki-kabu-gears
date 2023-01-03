@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title> キャンプギアリスト</title>
+    </head>
+    <body>
+        <h1>持ち物ギアリスト</h1>
+        <form method="post" action="{{url_for('register')}}">
+            <table border="1">
+                <tr>
+                    <th>ギア名</th>
+                    <th>重量</th>
+                    <th>金額</th>
+                </tr>
+                <tr>
+                    <td><input type="text" name="name"></td>
+                    <td><input type="text" name="weight"></td>
+                    <td><input type="text" name="price"></td>
+                </tr>
+            </table>
+            <br>
+            <input type="submit" value="登録">
+        </form>
+        
+    </body>
+
+</html>
