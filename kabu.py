@@ -1,19 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # 初期設定
-
-# In[2]:
-
-
-#get_ipython().system('pip install pandas_datareader')
-#get_ipython().system('pip install mplfinance')
-#print('install end')
-
-
-# In[117]:
-
-
 from pandas_datareader import data
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -178,9 +162,6 @@ def evaluation_stock(company_name,start,end):
 
 
 # # メイン処理
-
-# In[118]:
-
 start = '2022-01-01'
 end = datetime.datetime.today().strftime("%Y-%m-%d")
 #日経225は^NKX SP500は^SPX 
@@ -191,8 +172,6 @@ df = evaluation_stock(company_name,start,end)
 
     
 
-
-# In[ ]:
 
 
 

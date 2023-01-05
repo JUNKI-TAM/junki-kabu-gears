@@ -5,45 +5,60 @@
 <a href="{{ url_for('kabu')}}">株式テクニカル分析</a>
         <br><br>
         <h1>持ち物ギアリスト</h1>
-            <h2>今の持ち物</h2>
                 {% if gears == [] %}
                     <p>今はギアを持っていません</p>
+                    <form method="post" action="{{url_for('register')}}">
+                        <table border="1">
+                            <tr>
+                                <th>ギア名</th>
+                                <th>重量</th>
+                                <th>備考</th>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="name"></td>
+                                <td><input type="text" name="weight"></td>
+                                <td><input type="text" name="price"></td>
+                                <td>
+                                    <input type="submit" value="登録">
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
                 {% else %}
-
-                    <table border="1">
-                        <tr>
-                            <th>ギア名</th>
-                            <th>重量</th>
-                            <th>金額</th>
-                        </tr>
-                        {% for gear in gears %}
+                    <form method="post" action="{{url_for('register')}}">
+                        <table border="1">
+                            <tr>
+                                <th>ギア名</th>
+                                <th>重量</th>
+                                <th>備考</th>
+                            </tr>
+                            {% for gear in gears %}
                             <tr>
                                 <td>{{gear.name}}</td>
                                 <td>{{gear.weight}}</td>
                                 <td>{{gear.price}}</td>
                                 <td>
-                                    <a href="/delete_list/{{ gear.name }}">削除</a>
+                                    <a href="/delete_list/{{ gear.name }}">
+                                        <button type="button">削除</button>
+                                    </a>
                                 </td>
                             </tr>
-                        {% endfor %}
+                            {% endfor %}
+                            <tr></tr><tr></tr><tr></tr><tr></tr>
+                            <tr></tr><tr></tr><tr></tr><tr></tr>
+                            <tr>
+                                <td><input type="text" name="name"></td>
+                                <td><input type="text" name="weight"></td>
+                                <td><input type="text" name="price"></td>
+                                <td>
+                                    <input type="submit" value="登録">
+                                </td>
+                            </tr>
+                        </table>
                         
-                    </table>
-                {% endif %} 
-                <p>{{test}}</p>
-                <br><br>
+                    </form>
 
-                <form method="post" action="{{url_for('register')}}">
-                    <table border="1">
-                        <tr>
-                            <td><input type="text" name="name"></td>
-                            <td><input type="text" name="weight"></td>
-                            <td><input type="text" name="price"></td>
-                        </tr>
-                    </table>
-                    <input type="submit" value="登録">
-                    <a class="btn btn-outline-primary" href="/" role="button">Return</a>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </form>
+                {% endif %} 
 
                 <img src="data:image/png;base64,{{ img_pie }}" /><br>
 

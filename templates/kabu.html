@@ -1,13 +1,10 @@
-<!DOCTYPE html>
-<html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title> 株式テクニカル分析</title>
-    </head>
-    <body>
+{% extends 'base.html' %}
+
+{% block body %}
+
         <a href="{{ url_for('index')}}">キャンプギアリスト</a>
         <br><br>
-        
+        <h1>株式テクニカル分析</h1>
         <form method="post" action="{{url_for('eval_kabu')}}">
             <table border="1">
                 <tr>
@@ -16,38 +13,39 @@
                     <th>いつまで</th>
                 </tr>
                 <tr>
-                    <td><input type="text" name="company_name"></td>
-                    <td><input type="text" name="start"></td>
-                    <td><input type="text" name="end"></td>
+                    <td><input type="text" name="company_name" value="^SPX"></td>
+                    <td><input type="text" name="start" value="2022-09-01"></td>
+                    <td><input type="text" name="end" value="today"></td>
                 </tr>
             </table>
             <input type="submit" value="分析開始">
         </form>
         
-        {% block content %}
-        <br>
-        <table border="1">
-            <tr>
-                <th>Cross</th>
-                <th>{{gd}}</th>
-            </tr>
-            <tr>
-                <th>RSI</th>
-                <th>{{rsi}}</th>
-            </tr>
-            <tr>
-                <th>MACD</th>
-                <th>{{macd}}</th>
-            </tr>
-            <tr>
-                <th>BBANDS</th>
-                <th>{{bbands}}</th>
-            </tr>
-        </table>
-        {% endblock%}
-        <img src="data:image/png;base64,{{ img_cls }}" /><br>
-        <img src="data:image/png;base64,{{ img_rsi }}" /><br>
-        <img src="data:image/png;base64,{{ img_vol }}" /><br>
-    </body>
+        {% if img_cls == [] %}
 
-</html>
+        {% else %}
+            <br>
+            <table border="1">
+                <tr>
+                    <th>Cross</th>
+                    <th>{{gd}}</th>
+                </tr>
+                <tr>
+                    <th>RSI</th>
+                    <th>{{rsi}}</th>
+                </tr>
+                <tr>
+                    <th>MACD</th>
+                    <th>{{macd}}</th>
+                </tr>
+                <tr>
+                    <th>BBANDS</th>
+                    <th>{{bbands}}</th>
+                </tr>
+            </table>
+            
+            <img src="data:image/png;base64,{{ img_cls }}" /><br>
+            <img src="data:image/png;base64,{{ img_rsi }}" /><br>
+            <img src="data:image/png;base64,{{ img_vol }}" /><br>
+        {% endif %} 
+{%endblock%}
