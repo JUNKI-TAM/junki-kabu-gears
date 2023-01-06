@@ -16,6 +16,8 @@ import pandas as pd
 import matplotlib  # <--ここを追加
 matplotlib.use('Agg')  # <--ここを追加
 import matplotlib.pyplot as plt
+
+import matplotlib.dates as mdates
 import datetime
 import mplfinance as mpf
 import numpy as np
@@ -86,7 +88,53 @@ def delete_list(list_name):
 
 @app.route('/kabu')
 def kabu():
-    return render_template('kabu.html',img_cls = [])   
+    return render_template('kabu.html',patarn = 1)   
+
+
+
+
+def jdg_stock(df,n):
+    jdg_GorD_pre = df['sma00'].shift(n)-df['sma02'].shift(n)
+    jdg_GorD_now = df['sma00']-df['sma02']
+    analyze = 'CROSS: '
+    if (jdg_GorD_pre[-1] > 0) and (jdg_GorD_now[-1] < 0):
+        ans_gd='DEAD CROSS'
+    elif (jdg_GorD_pre[-1] < 0) and (jdg_GorD_now[-1] > 0):
+        ans_gd='GOALDEN CROSS'
+    else:
+        ans_gd='non cross'
+
+    analyze = 'RSI: '
+    if (df['RSI'][-n:]<20).sum() > 0:
+        ans_rsi='TOO SEALING'
+    elif (df['RSI'][-n:]>80).sum() > 0:
+        ans_rsi='TOO BUYING'
+    else:
+        ans_rsi='normal operation'
+
+    analyze = 'MACD: '
+    if (df['MACD'][-n:]<-200).sum() > 0:
+        ans_macd='HIGH-DOWNTREND'
+    elif (df['MACD'][-n:]>200).sum() > 0:
+        ans_macd='HIGH-UPTREND'
+    elif (df['MACD'][-n:]<0).sum() > (df['MACD'][-n:]>0).sum():
+        ans_macd='Low-Downtrend'
+    elif (df['MACD'][-n:]<0).sum() < (df['MACD'][-n:]>0).sum():
+        ans_macd='Low-Uptrend'
+    else:
+        ans_macd='non-trend'
+        
+    analyze = 'BBANDS: '
+    jdg_BBANDS_upper = (df['UPPER']-df['Close'])<0
+    jdg_BBANDS_lower = (df['LOWER']-df['Close'])>0
+    if jdg_BBANDS_upper[-n:].sum()>0:
+        ans_bbands='TOO BUYING TIMING'
+    elif jdg_BBANDS_lower[-n:].sum()>0:
+        ans_bbands='TOO SEALING TIMING'
+    else:
+        ans_bbands='normal operation'
+
+    return [ans_gd,ans_rsi,ans_macd,ans_bbands]
 
 
 @app.route('/eval_kabu',methods=['POST'])
@@ -99,15 +147,35 @@ def eval_kabu():
     else:
         end = request.form['end']
 
+    ans_gd_s=[]
+    ans_rsi_s=[]
+    ans_macd_s=[]
+    ans_bbands_s=[]
+    ans_gd_m=[]
+    ans_rsi_m=[]
+    ans_macd_m=[]
+    ans_bbands_m=[]
+    ans_gd_l=[]
+    ans_rsi_l=[]
+    ans_macd_l=[]
+    ans_bbands_l=[]
+    base64_img_close=[]
+    base64_img_vol=[]
+    base64_img_rsi=[]
+    
+
     if (company_name!='' and start!='' and end!=''):
+        patarn=2
         #get data
         df = data.DataReader(company_name,'stooq').sort_index()
         df = df[(df.index>=start) & (df.index<=end)]
         date = df.index
         price = df['Close']
+
+        # 分析指標算出
         # 単純移動平均
-        ##ゴールデンクロス：短期が長期を上回る
-        ##デッドクロス：短期が長期を下回る
+        ##ゴールデンクロス：短期が長期を上回る 買い時
+        ##デッドクロス：短期が長期を下回る　売り時
         span00 = 5
         span01 = 25
         span02 = 50
@@ -119,6 +187,7 @@ def eval_kabu():
         bjb_std = price.rolling(window=n).std()
         df['UPPER'] = df['sma01'] + bjb_std*2
         df['LOWER'] = df['sma01'] - bjb_std*2
+        
         #MACD
         ##MACD線 ＝ 短期移動平均線（EMA） － 長期移動平均線（EMA）　（例：12週線 － 26週線）
         ##ｎ日EMA＝（EMAy×（ｎ－1）＋P×2）÷（ｎ＋1）
@@ -159,6 +228,7 @@ def eval_kabu():
             emay = macd_signal[indx]
         ##ヒストグラム（OSCI） ＝ MACD線 － シグナル
         df['MACD'] = macd_line-macd_signal
+        
         #RSI
         #① RS＝（n日間の終値の上昇幅の平均）÷（n日間の終値の下落幅の平均）
         #② RSI= 100　-　（100　÷　（RS+1））
@@ -174,59 +244,16 @@ def eval_kabu():
         rsi.index = df.index
         df['RSI']=rsi
 
-        #output figure
-        apds = [mpf.make_addplot(df['sma00'],color='blue'),
-                mpf.make_addplot(df['sma01'],color='orange'),
-                mpf.make_addplot(df['sma02'],color='green'),
-                mpf.make_addplot(df['UPPER'],color='gray'),
-                mpf.make_addplot(df['LOWER'],color='gray'),
-                mpf.make_addplot(df['MACD'],type='bar',color='gray',width=1.0,panel=1,alpha=0.5,ylabel='MACD'),
-                mpf.make_addplot(df['RSI'],type='line',panel=2,ylabel='RSI')
-            ]
+
 
         #株価評価
-        n=10
-        jdg_GorD_pre = df['sma00'].shift(n)-df['sma02'].shift(n)
-        jdg_GorD_now = df['sma00']-df['sma02']
-        analyze = 'CROSS: '
-        if (jdg_GorD_pre[-1] > 0) and (jdg_GorD_now[-1] < 0):
-            ans_gd='Dead Cross Timing!!'
-        elif (jdg_GorD_pre[-1] < 0) and (jdg_GorD_now[-1] > 0):
-            ans_gd='Goalden Cross Timing!!'
-        else:
-            ans_gd='Nothing cross point'
-
-        analyze = 'RSI: '
-        if (df['RSI'][-n:]<20).sum() > 0:
-            ans_rsi='TOO SEALING TIMING!'
-        elif (df['RSI'][-n:]>80).sum() > 0:
-            ans_rsi='TOO BUYING TIMING!'
-        else:
-            ans_rsi='normal operation'
-
-        analyze = 'MACD: '
-        if (df['MACD'][-n:]<-200).sum() > 0:
-            ans_macd='強下降トレンド'
-        elif (df['MACD'][-n:]>200).sum() > 0:
-            ans_macd='強下降トレンド'
-        elif (df['MACD'][-n:]<0).sum() > (df['MACD'][-n:]>0).sum():
-            ans_macd='弱下降トレンド'
-        elif (df['MACD'][-n:]<0).sum() < (df['MACD'][-n:]>0).sum():
-            ans_macd='弱上昇トレンド'
-        else:
-            ans_macd='トレンド不明'
-            
-        analyze = 'BBANDS: '
-        jdg_BBANDS_upper = (df['UPPER']-df['Close'])<0
-        jdg_BBANDS_lower = (df['LOWER']-df['Close'])>0
-        if jdg_BBANDS_upper[-n:].sum()>0:
-            ans_bbands='TOO BUYING TIMING!'
-        elif jdg_BBANDS_lower[-n:].sum()>0:
-            ans_bbands='TOO SEALING TIMING!'
-        else:
-            ans_bbands='normal operation'
+        #日単位
+        [ans_gd_s,ans_rsi_s,ans_macd_s,ans_bbands_s] = jdg_stock(df,1)
+        #週単位
+        [ans_gd_m,ans_rsi_m,ans_macd_m,ans_bbands_m] = jdg_stock(df,7)
+        #月単位
+        [ans_gd_l,ans_rsi_l,ans_macd_l,ans_bbands_l] = jdg_stock(df,30)
         
-        #mpf.plot(df,type='candle',volume =True,addplot=apds,volume_panel=3,panel_ratios=(5,2,2,1))
         image = BytesIO()
         
         plt.clf()
@@ -237,6 +264,10 @@ def eval_kabu():
         plt.plot(date,df['sma02'],label="long")
         plt.fill_between(date,df["UPPER"],df["LOWER"],color='gray',alpha=0.2)
         plt.legend()
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%y/%m"))
+        plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        plt.gcf().autofmt_xdate()
+        plt.grid(linestyle='dotted')
         plt.savefig(image, format="png")
         # base64 形式に変換する。
         image.seek(0)
@@ -246,6 +277,10 @@ def eval_kabu():
         plt.figure(figsize=(10,2))
         plt.bar(date,df["Volume"],label="Volume",color='gray')
         plt.legend()
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%y/%m"))
+        plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        plt.gcf().autofmt_xdate()
+        plt.grid(linestyle='dotted')
         image = BytesIO()
         plt.savefig(image, format="png")
         # base64 形式に変換する。
@@ -258,6 +293,10 @@ def eval_kabu():
         plt.ylim(0,100)
         plt.hlines([20,80],datetime.datetime.strptime(start,"%Y-%m-%d").date(),datetime.datetime.strptime(end,"%Y-%m-%d").date(),"gray",linestyles="dashed")
         plt.legend()
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%y/%m"))
+        plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        plt.gcf().autofmt_xdate()
+        plt.grid(linestyle='dotted')
         image = BytesIO()
         plt.savefig(image, format="png")
         plt.close()
@@ -265,16 +304,15 @@ def eval_kabu():
         image.seek(0)
         base64_img_rsi = base64.b64encode(image.read()).decode()
     else:
-        ans_gd=[]
-        ans_rsi=[]
-        ans_macd=[]
-        ans_bbands=[]
-        base64_img_close=[]
-        base64_img_vol=[]
-        base64_img_rsi=[]
+        patarn=3
 
-    return render_template('kabu.html', gd = ans_gd,rsi = ans_rsi,macd = ans_macd,bbands = ans_bbands,
+    return render_template('kabu.html', 
+    stock_name = company_name,start=start,end=end,patarn=patarn,
+    gd_s = ans_gd_s,rsi_s = ans_rsi_s,macd_s = ans_macd_s,bbands_s = ans_bbands_s,
+    gd_m = ans_gd_m,rsi_m = ans_rsi_m,macd_m = ans_macd_m,bbands_m = ans_bbands_m,
+    gd_l = ans_gd_l,rsi_l = ans_rsi_l,macd_l = ans_macd_l,bbands_l = ans_bbands_l,
     img_cls=base64_img_close,img_vol=base64_img_vol,img_rsi=base64_img_rsi)
+
 
 if __name__ =='__main__':
     app.run()

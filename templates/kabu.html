@@ -8,7 +8,7 @@
         <form method="post" action="{{url_for('eval_kabu')}}">
             <table border="1">
                 <tr>
-                    <th>株式名</th>
+                    <th>株式コード</th>
                     <th>いつから</th>
                     <th>いつまで</th>
                 </tr>
@@ -21,26 +21,48 @@
             <input type="submit" value="分析開始">
         </form>
         
-        {% if img_cls == [] %}
+        {% if patarn == 1 %}
+        
+        {% elif patarn == 3 %}
+        
+            <h2>フォームに正しく入力してください</h2>
 
         {% else %}
+            <h2>■Result</h2>
+            <h3>CODE:{{stock_name}}</h3>
+            <h3>From:{{start}}  　To:{{end}}</h3>
+        
             <br>
             <table border="1">
                 <tr>
+                    <th></th>
+                    <th>Daily</th>
+                    <th>Weekly</th>
+                    <th>Monthly</th>
+                </tr>
+                <tr>
                     <th>Cross</th>
-                    <th>{{gd}}</th>
+                    <td>{{gd_s}}</td>
+                    <td>{{gd_m}}</td>
+                    <td>{{gd_l}}</td>
                 </tr>
                 <tr>
                     <th>RSI</th>
-                    <th>{{rsi}}</th>
+                    <td>{{rsi_s}}</td>
+                    <td>{{rsi_m}}</td>
+                    <td>{{rsi_l}}</td>
                 </tr>
                 <tr>
                     <th>MACD</th>
-                    <th>{{macd}}</th>
+                    <td>{{macd_s}}</td>
+                    <td>{{macd_m}}</td>
+                    <td>{{macd_l}}</td>
                 </tr>
                 <tr>
                     <th>BBANDS</th>
-                    <th>{{bbands}}</th>
+                    <td>{{bbands_s}}</td>
+                    <td>{{bbands_m}}</td>
+                    <td>{{bbands_l}}</td>
                 </tr>
             </table>
             
@@ -48,4 +70,5 @@
             <img src="data:image/png;base64,{{ img_rsi }}" /><br>
             <img src="data:image/png;base64,{{ img_vol }}" /><br>
         {% endif %} 
+
 {%endblock%}
